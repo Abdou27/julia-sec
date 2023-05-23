@@ -1,20 +1,20 @@
 using Cbc, JuMP
 
-function P(g::Matrix{Int}, source::Int, target::Int)::Tuple{Int, Matrix{Int}}
+function linear_model(graph::Matrix{Int}, source::Int, target::Int)::Tuple{Int, Matrix{Int}}
     # Size of the matrix
-    n = size(g, 1)
+    n = size(graph, 1)
 
     # Create an optimization model
     model = Model(Cbc.Optimizer)
 
     # The decision variables x[i, j], representing the flow on the arc (i, j) in the graph. 
-    # The variables are non-negative and bounded by the capacity g[i, j] of the corresponding arc.
-    @variable(model, 0 <= x[i = 1:n, j = 1:n] <= g[i, j])
+    # The variables are non-negative and bounded by the capacity graph[i, j] of the corresponding arc.
+    @variable(model, 0 <= x[i = 1:n, j = 1:n] <= graph[i, j], Bin)
 
     # For each vertex i (excluding the source and target), this constraint ensures that the sum of flow entering i is equal to the sum of flow leaving i. 
     for i in 1:n
-        if i ≠ source && i ≠ target
-            @constraint(model, sum(x[j, i] for j in 1:n if j ≠ i) == sum(x[i, j] for j in 1:n if j ≠ i))
+        if i != source && i != target
+            @constraint(model, sum(x[j, i] for j in 1:n if j != i) == sum(x[i, j] for j in 1:n if j != i))
         end
     end
     # This constraint ensures that the sum of flow entering the source vertex is zero.
@@ -39,7 +39,11 @@ function P(g::Matrix{Int}, source::Int, target::Int)::Tuple{Int, Matrix{Int}}
     return flow_value, flow_distribution
 end
 
-function sec(graph::Matrix{Int}, verbose::Bool = false)::Tuple{Int, Array{Tuple{Int, Int}}}
+function P(graph::Matrix{Int}, source::Int, target::Int)::Int
+    return linear_model(graph, source, target)[1]
+end
+
+function find_minimum_cut(graph::Matrix{Int})::Tuple{Int, Array{Tuple{Int, Int}}}
     # Size of the matrix
     n = size(graph, 1)
 
@@ -48,16 +52,12 @@ function sec(graph::Matrix{Int}, verbose::Bool = false)::Tuple{Int, Array{Tuple{
         return 0, []
     end
 
+    # Find min cut by iteration
     pmin = Inf
     mincut = []
-
     for a in 1:n
         b = mod(a % n, n) + 1
-        p, x = P(graph, a, b)
-
-        if verbose
-            println("P($a, $b) = $p")
-        end
+        p, x = linear_model(graph, a, b)
 
         if p == 0
             return p, []
@@ -68,4 +68,8 @@ function sec(graph::Matrix{Int}, verbose::Bool = false)::Tuple{Int, Array{Tuple{
     end
 
     return pmin, mincut
+end
+
+function generate_random_graph(n::Int)::Matrix{Int}
+    return rand(n, n) .<= 0.5
 end
