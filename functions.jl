@@ -1,6 +1,6 @@
 using Cbc, JuMP
 
-function P(g::Matrix{Int}, source::Int, target::Int)
+function P(g::Matrix{Int}, source::Int, target::Int)::Tuple{Int, Matrix{Int}}
     # Size of the matrix
     n = size(g, 1)
 
@@ -37,4 +37,35 @@ function P(g::Matrix{Int}, source::Int, target::Int)
     flow_distribution = round.(Int, value.(x))
 
     return flow_value, flow_distribution
+end
+
+function sec(graph::Matrix{Int}, verbose::Bool = false)::Tuple{Int, Array{Tuple{Int, Int}}}
+    # Size of the matrix
+    n = size(graph, 1)
+
+    # Handle base case
+    if n < 2
+        return 0, []
+    end
+
+    pmin = Inf
+    mincut = []
+
+    for a in 1:n
+        b = mod(a % n, n) + 1
+        p, x = P(graph, a, b)
+
+        if verbose
+            println("P($a, $b) = $p")
+        end
+
+        if p == 0
+            return p, []
+        elseif p < pmin
+            pmin = p
+            mincut = map(y -> (a, y), findall(x->x==1, x[a,:]))
+        end
+    end
+
+    return pmin, mincut
 end
