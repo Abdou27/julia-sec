@@ -2,6 +2,11 @@
 - Abderrahim BENMELOUKA
 - Elon COHEN
 
+# Project description
+This project consists of writing a Julia program using the JuMP library to solve an optimization problem. 
+The problem we address is an application of the max-flow problem. 
+It consists of finding a feature of a network, called the strong edge connectivity (SEC), which measures the fault resistance of a network.
+
 # Linear model for the max-flow problem
 ## Decision Variables:
 For each arc in the graph, a binary decision variable x is introduced. It represents whether the flow is present on that arc or not. 
