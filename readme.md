@@ -37,7 +37,7 @@ The flow distribution matrix represents the flow values on each arc in the graph
 The packages `Cbc` and `JuMP` are required for this project.
 
 # Execution
-To run the tests written, run this command after making sure the packages are installed :
+To run the tests, run this command after making sure the packages are installed :
 ```shell
 julia main.jl
 ```
