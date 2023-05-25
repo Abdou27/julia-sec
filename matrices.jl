@@ -1,3 +1,11 @@
+"""
+Group members :
+- Abderrahim BENMELOUKA
+- Elon COHEN
+
+This file contains all the different graph adjacency matrices used for this project.
+"""
+
 G1 = [
     0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0;
     0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0;
