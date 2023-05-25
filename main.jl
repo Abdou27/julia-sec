@@ -5,7 +5,12 @@ include("matrices.jl")
 
 """
 In this file, we test the different functions with the small graphs (G3, G4, G5), 
-then we use those functions to compute the different P and SEC properties of the big graphs (G1, G2)
+then we use those functions to compute the different P and SEC properties of the big graphs (G1, G2).
+
+Results :
+SEC(G3) = 2
+SEC(G4) = 2
+SEC(G5) = 0
 """
 
 # Testing the P function
@@ -35,12 +40,62 @@ then we use those functions to compute the different P and SEC properties of the
 @test P(G5, 10, 11) == 2
 @test P(G5, 11, 12) == 1
 @test P(G5, 12, 1) == 0
+
 println("All P function tests passed !")
 
-# Testing the find_minimum_cut function
-@test find_minimum_cut(G1) == (1, [(26, 25)])
-@test find_minimum_cut(G2) == (12, [(9, 2), (9, 3), (9, 10), (9, 11), (9, 13), (9, 14), (9, 17), (9, 19), (9, 20), (9, 23), (9, 24), (9, 26)])
-@test find_minimum_cut(G3) == (2, [(1, 2), (1, 3)])
-@test find_minimum_cut(G4) == (2, [(1, 2), (1, 3)])
-@test find_minimum_cut(G5) == (0, [])
-println("All find_minimum_cut function tests passed !")
+# G1
+n = size(G1, 1)
+seen_values = Int[]
+for i in 1:n
+    j = i+1
+    if j > n
+        j = 1
+    end
+    p = P(G1, i, j)
+    if !in(p, seen_values)
+        println("P(G1, $i, $j) = $p")
+        push!(seen_values, p)
+    end
+end
+# G2
+n = size(G2, 1)
+seen_values = Int[]
+for i in 1:n
+    j = i+1
+    if j > n
+        j = 1
+    end
+    p = P(G2, i, j)
+    if !in(p, seen_values)
+        println("P(G1, $i, $j) = $p")
+        push!(seen_values, p)
+    end
+end
+
+# Testing the SEC function
+@test SEC(G3) == 2
+@test SEC(G4) == 2
+@test SEC(G5) == 0
+
+println("All SEC function tests passed !")
+
+sec_G1 = SEC(G1)
+println("SEC(G1) = $sec_G1")
+sec_G2 = SEC(G2)
+println("SEC(G2) = $sec_G2")
+
+# Testing the min_set_of_edges function
+@test min_set_of_edges(G3) == [(1, 2), (1, 3)]
+@test min_set_of_edges(G4) == [(1, 2), (1, 3)]
+@test min_set_of_edges(G5) == []
+
+println("All min_set_of_edges function tests passed !")
+
+min_set_of_edges_G1 = min_set_of_edges(G1)
+println("Minimum set of edges to make G1 no longer strongly connected = $min_set_of_edges_G1")
+min_set_of_edges_G2 = min_set_of_edges(G2)
+println("Minimum set of edges to make G2 no longer strongly connected = $min_set_of_edges_G2")
+
+# Computing the SEC of a connected graph of 1000 vertices
+# G_1000 = generate_connected_graph(1000)
+# print("SEC(G_1000) = ", SEC(G_1000))

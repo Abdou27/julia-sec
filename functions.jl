@@ -1,6 +1,7 @@
 using Cbc, JuMP
+using LightGraphs, SimpleWeightedGraphs
 
-function linear_model(graph::Matrix{Int}, source::Int, target::Int)::Tuple{Int, Matrix{Int}}
+function linear_model(graph::Matrix{Int}, source::Int, target::Int, flow_distribution::Matrix{Int})::Tuple{Int, Matrix{Int}}
     # Size of the matrix
     n = size(graph, 1)
 
@@ -32,44 +33,99 @@ function linear_model(graph::Matrix{Int}, source::Int, target::Int)::Tuple{Int, 
     # Check solution status
     @assert termination_status(model) == MOI.OPTIMAL "No optimal solution found for the maximum flow problem"
 
-    # Retrieve maximum flow value and flow distribution
+    # Retrieve maximum flow value and flow distribution and convert them to Ints
     flow_value = round(Int, objective_value(model))
-    flow_distribution = round.(Int, value.(x))
+    flow_distribution[:] = round.(Int, value.(x))
 
     return flow_value, flow_distribution
-end
-
-function P(graph::Matrix{Int}, source::Int, target::Int)::Int
-    return linear_model(graph, source, target)[1]
 end
 
 function find_minimum_cut(graph::Matrix{Int})::Tuple{Int, Array{Tuple{Int, Int}}}
     # Size of the matrix
     n = size(graph, 1)
 
-    # Handle base case
+    # If only one vertex, the graph isn't strongly connected
     if n < 2
         return 0, []
     end
 
     # Find min cut by iteration
-    pmin = Inf
-    mincut = []
+    p_min = Inf
+    min_cut = []
+    flow_matrix = zeros(Int, n, n)
     for a in 1:n
-        b = mod(a % n, n) + 1
-        p, x = linear_model(graph, a, b)
+        b = a + 1
+        if b > n
+            b = 1
+        end
+        p, x = linear_model(graph, a, b, flow_matrix)
 
         if p == 0
+            # The graph isn't strongly connected
             return p, []
-        elseif p < pmin
-            pmin = p
-            mincut = map(y -> (a, y), findall(x->x==1, x[a,:]))
+        elseif p < p_min
+            # Update p_min and min_cut with new values
+            p_min = p
+            min_cut = map(y -> (a, y), findall(x->x==1, x[a,:]))
         end
     end
 
-    return pmin, mincut
+    return p_min, min_cut
 end
 
-function generate_random_graph(n::Int)::Matrix{Int}
-    return rand(n, n) .<= 0.5
+function P(graph::Matrix{Int}, source::Int, target::Int)::Int
+    n = size(graph, 1)
+    flow_matrix = zeros(Int, n, n)
+    return linear_model(graph, source, target, flow_matrix)[1]
+end
+
+function SEC(graph::Matrix{Int})::Int
+    return find_minimum_cut(graph)[1]
+end
+
+function min_set_of_edges(graph::Matrix{Int})::Array{Tuple{Int, Int}}
+    return find_minimum_cut(graph)[2]
+end
+
+function generate_connected_graph(n::Int)::Matrix{Int}
+    # Create an empty adjacency matrix
+    graph = zeros(Int, n, n)
+
+    # Start with a tree with n-1 vertices
+    for i in 2:n
+        # Connect the current vertex to a randomly selected previous vertex
+        previous_vertex = rand(1:i-1)
+        graph[i, previous_vertex] = 1
+        graph[previous_vertex, i] = 1
+    end
+
+    # Connect the remaining vertex to a randomly selected vertex
+    remaining_vertex = rand(1:n)
+    graph[n, remaining_vertex] = 1
+    graph[remaining_vertex, n] = 1
+
+    return graph
+end
+
+function sec_lg(graph::Matrix{Int})::Int
+    n = size(graph, 1)
+    if n < 2
+        return 0
+    end
+
+    g = SimpleWeightedGraph(graph)
+
+    p_min = Inf
+    for a in 1:n
+        b = mod(a % n, n) + 1
+        flow = maximum_flow(g, a, b)[1]
+
+        if flow == 0
+            return flow
+        elseif flow < p_min
+            p_min = flow
+        end
+    end
+
+    return p_min
 end
